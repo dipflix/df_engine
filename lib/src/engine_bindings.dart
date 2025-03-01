@@ -1,11 +1,10 @@
 import 'dart:ffi';
 import 'dart:io' show Platform;
-
 import 'package:df_engine/src/structs/engine.dart';
+import 'package:df_engine/src/structs/vertex_3d.dart';
 import 'package:ffi/ffi.dart';
 
 import 'graphics/camera_3d.dart';
-import 'structs/vertex_3d.dart';
 
 typedef FrameCallbackC = Void Function(Float deltaTime);
 typedef FrameCallbackDart = void Function(double deltaTime);
@@ -17,35 +16,39 @@ class GameEngine {
   late final _createFunc = _lib.lookupFunction<
       Pointer<Engine> Function(Int32, Int32, Pointer<Utf8>),
       Pointer<Engine> Function(int, int, Pointer<Utf8>)>('engine_create');
-  late final _destroyFunc = _lib.lookupFunction<Void Function(Pointer<Engine>),
+  late final _destroyFunc = _lib.lookupFunction<
+      Void Function(Pointer<Engine>),
       void Function(Pointer<Engine>)>('engine_destroy');
   late final _runFunc = _lib.lookupFunction<
       Void Function(Pointer<Engine>, Pointer<NativeFunction<FrameCallbackC>>),
-      void Function(Pointer<Engine>,
-          Pointer<NativeFunction<FrameCallbackC>>)>('engine_run');
+      void Function(Pointer<Engine>, Pointer<NativeFunction<FrameCallbackC>>)>('engine_run');
   late final _setClearColorFunc = _lib.lookupFunction<
       Void Function(Pointer<Engine>, Float, Float, Float, Float),
-      void Function(Pointer<Engine>, double, double, double,
-          double)>('engine_set_clear_color');
+      void Function(Pointer<Engine>, double, double, double, double)>('engine_set_clear_color');
   late final _setVerticesFunc = _lib.lookupFunction<
       Void Function(Pointer<Engine>, Pointer<Vertex3D>, Uint32),
-      void Function(
-          Pointer<Engine>, Pointer<Vertex3D>, int)>('engine_set_vertices');
+      void Function(Pointer<Engine>, Pointer<Vertex3D>, int)>('engine_set_vertices');
   late final _setViewMatrixFunc = _lib.lookupFunction<
       Void Function(Pointer<Engine>, Pointer<Float>),
       void Function(Pointer<Engine>, Pointer<Float>)>('engine_set_view_matrix');
 
   GameEngine() {
     _lib = DynamicLibrary.open(Platform.isWindows
-        ? 'vulkan_wrapper/build/Release/engine.dll'
+        ? 'vulkan_wrapper/compiled/Release/engine.dll'
         : throw UnsupportedError('Platform not supported'));
+    print("Dynamic library loaded");
   }
 
   void initialize(int width, int height, String title) {
+    print("Calling engine.initialize with width=$width, height=$height, title=$title");
     final titlePtr = title.toNativeUtf8();
+    print("Title pointer created: ${titlePtr.address}");
     _engine = _createFunc(width, height, titlePtr);
     malloc.free(titlePtr);
-    if (_engine.address == 0) throw Exception("Failed to create engine");
+    if (_engine.address == 0) {
+      throw Exception("Failed to create engine: engine pointer is null");
+    }
+    print("Engine initialized successfully");
   }
 
   void setClearColor(double r, double g, double b, double a) {
@@ -69,8 +72,7 @@ class GameEngine {
   }
 
   void run(void Function(double deltaTime) callback) {
-    final nativeCallback =
-        NativeCallable<FrameCallbackC>.isolateLocal(callback);
+    final nativeCallback = NativeCallable<FrameCallbackC>.isolateLocal(callback);
     _runFunc(_engine, nativeCallback.nativeFunction);
     nativeCallback.close();
   }

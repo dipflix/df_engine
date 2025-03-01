@@ -13,8 +13,8 @@
 typedef void (*FrameCallback)(float deltaTime);
 
 typedef struct {
-    float x, y, z;  // 3D позиция
-    float r, g, b;  // Цвет
+    float x, y, z;
+    float r, g, b;
 } Vertex3D;
 
 typedef struct {
@@ -55,5 +55,21 @@ EXPORT void engine_run(Engine* engine, FrameCallback callback);
 EXPORT void engine_set_clear_color(Engine* engine, float r, float g, float b, float a);
 EXPORT void engine_set_vertices(Engine* engine, Vertex3D* vertices, uint32_t vertexCount);
 EXPORT void engine_set_view_matrix(Engine* engine, float* matrix);
+
+
+void createSwapChain(Engine* engine);
+void createRenderPass(Engine* engine);
+void createFramebuffers(Engine* engine);
+void createCommandPoolAndBuffers(Engine* engine);
+void createSyncObjects(Engine* engine);
+void createVertexBuffer(Engine* engine);
+void createUniformBuffer(Engine* engine);
+void createGraphicsPipeline(Engine* engine);
+void createDescriptorPool(Engine* engine);
+void createDescriptorSet(Engine* engine);
+void createDescriptorSetLayout(Engine* engine);
+
+
+VkShaderModule createShaderModule(VkDevice device, const char* filename);
 
 #endif
